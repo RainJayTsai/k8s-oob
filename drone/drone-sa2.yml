@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: drone-deploy-sa
+  namespace: drone-ci
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: drone-deploy-cr
+rules:
+  - apiGroups: ["extensions", "apps",""]
+    resources: ["deployments","configmaps","pods","services","secrets"]
+    verbs: ["create", "delete", "get", "list", "watch", "patch", "update"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["create", "delete", "get", "list", "watch", "patch", "update"]
+  - apiGroups: ["traefik.containo.us"]
+    resources: ["middlewares"]
+    verbs: ["create", "get", "list", "watch", "patch", "update"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: drone-deploy-crd
+roleRef:
+  kind: ClusterRole
+  name: drone-deploy-cr
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: drone-deploy-sa
+  namespace: drone-ci
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: drone-deploy
+  namespace: drone-ci
+  annotations:
+    kubernetes.io/service-account.name: drone-deploy-sa
+type: kubernetes.io/service-account-token
+
+
+# https://ithelp.ithome.com.tw/articles/10195944https://ithelp.ithome.com.tw/articles/10195944

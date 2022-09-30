@@ -1,0 +1,38 @@
+#kind: Deployment
+kind: DaemonSet 
+apiVersion: apps/v1
+metadata:
+  name: traefik-deployment
+  labels:
+    app: traefik
+
+spec:
+#  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik
+  template:
+    metadata:
+      labels:
+        app: traefik
+    spec:
+      serviceAccountName: traefik-account
+      nodeSelector:
+        node-role.kubernetes.io/ingress: ""
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          effect: NoSchedule
+      containers:
+        - name: traefik
+          image: traefik:v2.8
+          args:
+            - --api.insecure
+            - --providers.kubernetesingress
+            - --providers.kubernetescrd
+            - --providers.kubernetescrd.allowCrossNamespace=true
+            - --providers.kubernetesCRD.allowEmptyServices=true
+          ports:
+            - name: web
+              containerPort: 80
+            - name: dashboard
+              containerPort: 8080
